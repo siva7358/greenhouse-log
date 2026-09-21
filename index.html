@@ -4,36 +4,40 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="theme-color" content="#0b0f0b">
-<title>Smart Greenhouse</title>
+<title>Smart Greenhouse — Demo</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
   html, body { background: #0b0f0b; color: #e8f5e9;
     font-family: -apple-system, "Segoe UI", Roboto, sans-serif; min-height: 100%; overflow-x: hidden; }
-  body { padding: 16px 14px 40px; }
+  body { padding: 16px 14px 40px; max-width: 520px; margin: 0 auto; }
 
-  .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-  .header .title { font-size: 1.15rem; font-weight: 700; color: #a5d6a7; }
-  .header .sub   { font-size: 0.72rem; color: #6b7f6b; margin-top: 2px; }
+  /* Dual gauges */
+  .gauges {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px;
+  }
+  .gauge-card {
+    background: #12180f; border: 1px solid #1f2b1c;
+    border-radius: 20px; padding: 16px 10px; text-align: center;
+  }
+  .gauge-wrap { position: relative; width: 130px; height: 130px; margin: 0 auto 10px; }
+  .gauge-svg { transform: rotate(-90deg); }
+  .gauge-bg { fill: none; stroke: #1f2b1c; stroke-width: 10; }
+  .gauge-fg-hum  { fill: none; stroke: #66bb6a; stroke-width: 10;
+    stroke-linecap: round; transition: stroke-dashoffset 0.6s ease; }
+  .gauge-fg-temp { fill: none; stroke: #ffb74d; stroke-width: 10;
+    stroke-linecap: round; transition: stroke-dashoffset 0.6s ease; }
+  .gauge-center { position: absolute; inset: 0; display: flex;
+    flex-direction: column; align-items: center; justify-content: center; }
+  .gauge-val { font-size: 1.6rem; font-weight: 800; line-height: 1; }
+  .gauge-val.hum  { color: #a5d6a7; }
+  .gauge-val.temp { color: #ffcc80; }
+  .gauge-lbl { font-size: 0.62rem; color: #6b7f6b; margin-top: 3px;
+    letter-spacing: 0.5px; text-transform: uppercase; }
+  .gauge-target { font-size: 0.68rem; color: #8aa88a; margin-top: 4px; }
+  .gauge-target b { color: #a5d6a7; }
 
-  .ring-card { background: #12180f; border: 1px solid #1f2b1c; border-radius: 22px;
-    padding: 24px 18px; text-align: center; margin-bottom: 14px; }
-  .ring-wrap { position: relative; width: 200px; height: 200px; margin: 0 auto 18px; }
-  .ring-svg { transform: rotate(-90deg); }
-  .ring-bg { fill: none; stroke: #1f2b1c; stroke-width: 14; }
-  .ring-fg { fill: none; stroke: #66bb6a; stroke-width: 14; stroke-linecap: round;
-    transition: stroke-dashoffset 0.6s ease; }
-  .ring-center { position: absolute; inset: 0; display: flex; flex-direction: column;
-    align-items: center; justify-content: center; }
-  .ring-val { font-size: 2.6rem; font-weight: 800; color: #a5d6a7; line-height: 1; }
-  .ring-lbl { font-size: 0.7rem; color: #6b7f6b; margin-top: 4px; letter-spacing: 0.5px; }
-  .ring-note { font-size: 0.78rem; color: #8aa88a; line-height: 1.5; padding: 0 10px; }
-
-  .cards-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
-  .mini-card { background: #12180f; border: 1px solid #1f2b1c; border-radius: 16px; padding: 14px; }
-  .mini-card .l { font-size: 0.68rem; color: #6b7f6b; text-transform: uppercase; letter-spacing: 0.5px; }
-  .mini-card .v { font-size: 1.5rem; font-weight: 700; color: #a5d6a7; margin-top: 4px; }
-
+  /* Status row */
   .status-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
   .status-card { background: #12180f; border: 1px solid #1f2b1c; border-radius: 16px;
     padding: 14px; display: flex; flex-direction: column; gap: 6px; }
@@ -53,19 +57,24 @@
   .control-card { background: #12180f; border: 1px solid #1f2b1c; border-radius: 16px;
     padding: 14px; margin-bottom: 14px; }
   .control-title { font-size: 0.9rem; font-weight: 700; color: #a5d6a7; margin-bottom: 12px; }
+  .control-section {
+    font-size: 0.7rem; color: #6b7f6b; text-transform: uppercase;
+    letter-spacing: 0.5px; margin: 14px 0 8px;
+    padding-top: 10px; border-top: 1px solid #1a231a;
+  }
+  .control-section:first-of-type { margin-top: 0; padding-top: 0; border-top: none; }
   .control-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
   .control-row label { font-size: 0.8rem; color: #8aa88a; }
   .control-row input { width: 90px; background: #0e140c; border: 1px solid #1f2b1c;
     border-radius: 8px; padding: 8px 10px; color: #a5d6a7; font-size: 0.9rem;
     font-weight: 700; text-align: center; outline: none; }
   .control-row input:focus { border-color: #66bb6a; }
+  .control-row input.temp-input { color: #ffcc80; }
   .save-btn { width: 100%; padding: 12px; background: #66bb6a; color: #0b0f0b;
     border: none; border-radius: 10px; font-size: 0.9rem; font-weight: 700;
     cursor: pointer; margin-top: 6px; }
-  .save-btn:disabled { opacity: 0.5; }
+  .save-btn:active { opacity: 0.8; }
   .save-msg { text-align: center; font-size: 0.75rem; color: #81c784; margin-top: 8px; min-height: 16px; }
-  .current-target { text-align: center; font-size: 0.72rem; color: #6b7f6b;
-    margin-top: 10px; padding-top: 10px; border-top: 1px solid #1a231a; }
 
   .tabs { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; margin-bottom: 12px; scrollbar-width: none; }
   .tabs::-webkit-scrollbar { display: none; }
@@ -73,10 +82,18 @@
     color: #a5d6a7; background: #12180f; border: 1px solid #1f2b1c; cursor: pointer; }
   .tab.active { background: #66bb6a; color: #0b0f0b; border-color: #66bb6a; }
 
+  /* Charts */
   .chart-wrap { position: relative; background: #12180f; border: 1px solid #1f2b1c;
-    border-radius: 18px; padding: 14px 8px 8px; height: 260px; margin-bottom: 14px; }
-  .chart-tag { position: absolute; top: 10px; right: 14px; font-size: 0.75rem;
-    font-weight: 600; color: #a5d6a7; z-index: 5; }
+    border-radius: 18px; padding: 14px 8px 8px; height: 220px; margin-bottom: 12px; }
+  .chart-wrap.power-chart { height: 180px; }
+  .chart-tag { position: absolute; top: 10px; left: 14px; font-size: 0.72rem;
+    font-weight: 700; color: #a5d6a7; z-index: 5; letter-spacing: 0.5px; }
+  .chart-legend {
+    position: absolute; top: 10px; right: 14px;
+    display: flex; gap: 10px; font-size: 0.62rem; color: #8aa88a; z-index: 5;
+  }
+  .chart-legend .dot { display: inline-block; width: 8px; height: 8px;
+    border-radius: 50%; margin-right: 3px; vertical-align: middle; }
   canvas { width: 100% !important; height: 100% !important; }
 
   .table-box { background: #12180f; border: 1px solid #1f2b1c; border-radius: 16px;
@@ -91,41 +108,44 @@
   .badge.on  { background: #1f3a1f; color: #81c784; }
   .badge.off { background: #2b1a0f; color: #b9803f; }
   .refresh { text-align: center; font-size: 0.7rem; color: #6b7f6b; margin-top: 14px; }
-  .loading { text-align: center; padding: 30px 0; font-size: 0.8rem; color: #6b7f6b; }
 </style>
 </head>
 <body>
 
-  <div class="header">
-    <div>
-      <div class="title">🌿 Smart Greenhouse</div>
-      <div class="sub">ESP32 · SHT31 · GitHub log</div>
-    </div>
-  </div>
-
-  <div class="ring-card">
-    <div class="ring-wrap">
-      <svg class="ring-svg" width="200" height="200" viewBox="0 0 200 200">
-        <circle class="ring-bg" cx="100" cy="100" r="86"></circle>
-        <circle class="ring-fg" id="ringFg" cx="100" cy="100" r="86"
-                stroke-dasharray="540" stroke-dashoffset="540"></circle>
-      </svg>
-      <div class="ring-center">
-        <div class="ring-val" id="ringVal">--%</div>
-        <div class="ring-lbl">Humidity</div>
+  <!-- Dual gauges -->
+  <div class="gauges">
+    <div class="gauge-card">
+      <div class="gauge-wrap">
+        <svg class="gauge-svg" width="130" height="130" viewBox="0 0 130 130">
+          <circle class="gauge-bg" cx="65" cy="65" r="55"></circle>
+          <circle class="gauge-fg-hum" id="gaugeHum" cx="65" cy="65" r="55"
+                  stroke-dasharray="345.6" stroke-dashoffset="345.6"></circle>
+        </svg>
+        <div class="gauge-center">
+          <div class="gauge-val hum" id="gaugeHumVal">--%</div>
+          <div class="gauge-lbl">Humidity</div>
+        </div>
       </div>
+      <div class="gauge-target">Target: <b id="targetNote">52%</b></div>
     </div>
-    <div class="ring-note">
-      Target humidity is <b id="targetNote">--%</b>.<br>
-      Humidifier switches ON/OFF automatically.
+
+    <div class="gauge-card">
+      <div class="gauge-wrap">
+        <svg class="gauge-svg" width="130" height="130" viewBox="0 0 130 130">
+          <circle class="gauge-bg" cx="65" cy="65" r="55"></circle>
+          <circle class="gauge-fg-temp" id="gaugeTemp" cx="65" cy="65" r="55"
+                  stroke-dasharray="345.6" stroke-dashoffset="345.6"></circle>
+        </svg>
+        <div class="gauge-center">
+          <div class="gauge-val temp" id="gaugeTempVal">--°</div>
+          <div class="gauge-lbl">Temp</div>
+        </div>
+      </div>
+      <div class="gauge-target">Target: <b id="targetTempNote">27°C</b></div>
     </div>
   </div>
 
-  <div class="cards-row">
-    <div class="mini-card"><div class="l">Temperature</div><div class="v" id="tempVal">--°C</div></div>
-    <div class="mini-card"><div class="l">Target</div><div class="v" id="tgtVal">--%</div></div>
-  </div>
-
+  <!-- Status -->
   <div class="status-row">
     <div class="status-card">
       <div class="l">💧 Humidifier</div>
@@ -153,124 +173,163 @@
     </div>
   </div>
 
-  <!-- Target Humidity control -->
+  <!-- Controls -->
   <div class="control-card">
-    <div class="control-title">🎯 Target Humidity</div>
-    <div class="control-row"><label>Target (%)</label>
+    <div class="control-title">🎯 Controls</div>
+
+    <div class="control-section">Humidity</div>
+    <div class="control-row"><label>Target humidity (%)</label>
       <input type="number" id="inTarget" min="20" max="95" value="52"></div>
-    <div class="control-row"><label>± Band (%)</label>
+    <div class="control-row"><label>± Humidity band (%)</label>
       <input type="number" id="inBand" min="0" max="10" value="2"></div>
     <div class="control-row"><label>Fan ON above (%)</label>
       <input type="number" id="inFan" min="30" max="95" value="70"></div>
-    <button id="saveBtn" class="save-btn" onclick="saveTarget()">Save to GitHub</button>
+
+    <div class="control-section">Temperature</div>
+    <div class="control-row"><label>Target temperature (°C)</label>
+      <input type="number" id="inTargetTemp" min="10" max="40" value="27" class="temp-input"></div>
+    <div class="control-row"><label>± Temperature band (°C)</label>
+      <input type="number" id="inTempBand" min="0" max="5" step="0.5" value="1" class="temp-input"></div>
+    <div class="control-row"><label>Cooler ON above (°C)</label>
+      <input type="number" id="inCooler" min="10" max="40" value="32" class="temp-input"></div>
+
+    <button id="saveBtn" class="save-btn" onclick="saveTarget()">Save</button>
     <div class="save-msg" id="saveMsg"></div>
-    <div class="current-target">Current: <b id="currentTarget">--%</b>
-      · Updated: <span id="lastChanged">--</span></div>
   </div>
 
+  <!-- Tabs -->
   <div class="tabs" id="tabs">
     <button class="tab active" data-day="0">Today</button>
     <button class="tab" data-day="1">Yesterday</button>
     <button class="tab" data-day="2">2 Days Ago</button>
   </div>
 
+  <!-- Humidity chart -->
   <div class="chart-wrap">
-    <div class="chart-tag" id="chartTag">—</div>
-    <canvas id="chart"></canvas>
+    <div class="chart-tag">HUMIDITY</div>
+    <div class="chart-legend">
+      <span><span class="dot" style="background:#66bb6a"></span>Actual</span>
+      <span><span class="dot" style="background:#b9803f"></span>Target</span>
+    </div>
+    <canvas id="chartHum"></canvas>
   </div>
 
+  <!-- Temperature chart -->
+  <div class="chart-wrap">
+    <div class="chart-tag">TEMPERATURE</div>
+    <div class="chart-legend">
+      <span><span class="dot" style="background:#ffb74d"></span>Actual</span>
+      <span><span class="dot" style="background:#e65100"></span>Target</span>
+    </div>
+    <canvas id="chartTemp"></canvas>
+  </div>
+
+  <!-- Power chart -->
+  <div class="chart-wrap power-chart">
+    <div class="chart-tag">POWER</div>
+    <div class="chart-legend">
+      <span><span class="dot" style="background:#8a6d3b"></span>Watts</span>
+    </div>
+    <canvas id="chartPower"></canvas>
+  </div>
+
+  <!-- Table -->
   <div class="table-box">
     <table>
       <thead>
         <tr><th>Time</th><th>Temp</th><th>Hum</th><th>Tgt</th><th>Humid.</th><th>Fan</th><th>Power</th></tr>
       </thead>
-      <tbody id="tbody"><tr><td colspan="7" class="loading">Loading…</td></tr></tbody>
+      <tbody id="tbody"></tbody>
     </table>
   </div>
 
   <div class="refresh" id="refreshed">Loading…</div>
 
 <script>
-/* ============== CONFIG ============== */
-const GITHUB_USER = "your-username";
-const GITHUB_REPO = "greenhouse-log";
-const BRANCH      = "main";
-const REFRESH_MS  = 30000;
-const MAX_POINTS  = 720;
+/* ============================================================
+   DEMO — dual gauges, three charts, settable targets
+   ============================================================ */
 
-/* ⚠️ Fine-grained PAT with Actions: write on this repo only */
-const GITHUB_TOKEN = "github_pat_xxxxxxxxxxxxxxxx";
-
-const GREEN = "#66bb6a", LIGHT = "#a5d6a7", AMBER = "#b9803f";
-
-/* Power ratings */
-const PWR_HUMIDIFIER = 300;
-const PWR_FAN        = 25;
-const PWR_ESP32      = 1.5;
+const GREEN = "#66bb6a", LIGHT = "#a5d6a7", AMBER = "#b9803f", ORANGE = "#ffb74d", DEEP = "#e65100";
+const PWR_HUMIDIFIER = 300, PWR_FAN = 25, PWR_ESP32 = 1.5;
 
 let currentDay = 0;
-let chart;
+let chartHum, chartTemp, chartPower;
 
-/* ============== HELPERS ============== */
-function fileForOffset(offset) {
-  const d = new Date();
-  d.setDate(d.getDate() - offset);
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  const label = offset === 0 ? "Today" : offset === 1 ? "Yesterday" : `${offset} days ago`;
-  return { path: `data/${y}-${m}-${day}.csv`, label };
-}
+let targetHumidity = 52, humidityBand = 2, fanOnHumidity = 70;
+let targetTemp     = 27, tempBand     = 1, coolerOnTemp   = 32;
 
-/* ============== DATA ============== */
-async function loadData() {
-  const { path, label } = fileForOffset(currentDay);
-  const url = `https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/${BRANCH}/${path}?t=${Date.now()}`;
-  try {
-    const res = await fetch(url);
-    if (!res.ok) throw new Error("No data for " + label);
-    const text = await res.text();
-    parseCSV(text, label);
-  } catch (e) {
-    document.getElementById("tbody").innerHTML =
-      `<tr><td colspan="7" class="loading">⚠️ ${e.message}</td></tr>`;
-    document.getElementById("refreshed").textContent = "⚠️ " + e.message;
+function generateDayData(dayOffset, tHum, tTemp) {
+  const rows = [];
+  const now = new Date();
+  const samples = 8640;
+  const endTime = new Date(now.getTime() - dayOffset * 86400000);
+
+  for (let i = samples; i >= 0; i--) {
+    const t = new Date(endTime.getTime() - i * 10000);
+    if (t > now) continue;
+
+    const hour = t.getHours() + t.getMinutes() / 60;
+
+    const hum = tHum + 6 * Math.sin(hour / 3) + 3 * Math.sin(hour * 1.7) + (Math.random() - 0.5) * 1.5;
+    const temp = tTemp + 4 * Math.sin((hour - 6) / 4) + 1.5 * Math.sin(hour * 2.1) + (Math.random() - 0.5) * 0.6;
+
+    const humState = hum < tHum - 2 ? "ON" : "OFF";
+    const fanState = (hum > fanOnHumidity || temp > coolerOnTemp) ? "ON" : "OFF";
+
+    rows.push({
+      date: t.toISOString().slice(0,10),
+      time: t.toTimeString().slice(0,8),
+      temp: +temp.toFixed(1),
+      hum: +hum.toFixed(1),
+      target: tHum,
+      targetTemp: tTemp,
+      humState,
+      fanState
+    });
   }
+  return rows;
 }
 
-function parseCSV(text, label) {
-  const lines = text.trim().split("\n").slice(1);
-  const rows = lines.map(l => {
-    const [date, time, temp, hum, target, humState, fanState] = l.split(",");
-    return { date, time, temp: +temp, hum: +hum, target: +target,
-             humState: (humState || "OFF").trim(),
-             fanState: (fanState || "OFF").trim() };
-  }).filter(r => !isNaN(r.hum));
-  if (!rows.length) throw new Error("No readings yet for " + label);
+let DEMO_DATA = {
+  0: generateDayData(0, targetHumidity, targetTemp),
+  1: generateDayData(1, targetHumidity, targetTemp),
+  2: generateDayData(2, targetHumidity, targetTemp)
+};
 
+/* ---------- Render ---------- */
+function render() {
+  const rows = DEMO_DATA[currentDay];
   const last = rows[rows.length - 1];
+  const label = currentDay === 0 ? "Today" : currentDay === 1 ? "Yesterday" : `${currentDay} days ago`;
 
-  document.getElementById("ringVal").textContent = last.hum.toFixed(0) + "%";
-  document.getElementById("targetNote").textContent = last.target + "%";
-  const circ = 540;
-  document.getElementById("ringFg").style.strokeDashoffset =
-    circ * (1 - Math.max(0, Math.min(1, last.hum / 100)));
+  /* Humidity gauge */
+  const humPct = Math.max(0, Math.min(1, last.hum / 100));
+  document.getElementById("gaugeHum").style.strokeDashoffset = 345.6 * (1 - humPct);
+  document.getElementById("gaugeHumVal").textContent = last.hum.toFixed(0) + "%";
+  document.getElementById("targetNote").textContent = targetHumidity + "%";
 
-  document.getElementById("tempVal").textContent = last.temp.toFixed(1) + "°C";
-  document.getElementById("tgtVal").textContent  = last.target + "%";
+  /* Temperature gauge */
+  const tempPct = Math.max(0, Math.min(1, (last.temp - 10) / 30));
+  document.getElementById("gaugeTemp").style.strokeDashoffset = 345.6 * (1 - tempPct);
+  document.getElementById("gaugeTempVal").textContent = last.temp.toFixed(1) + "°";
+  document.getElementById("targetTempNote").textContent = targetTemp + "°C";
 
+  /* Humidifier */
   const humOn = last.humState === "ON";
   document.getElementById("humStatusTxt").textContent = humOn ? "Running" : "Idle";
   const humPill = document.getElementById("humPill");
   humPill.textContent = last.humState;
   humPill.className = "pill " + (humOn ? "on" : "off");
 
+  /* Fan */
   const fanOn = last.fanState === "ON";
   document.getElementById("fanStatusTxt").textContent = fanOn ? "Running" : "Idle";
   const fanPill = document.getElementById("fanPill");
   fanPill.textContent = last.fanState;
   fanPill.className = "pill " + (fanOn ? "on" : "off");
 
+  /* Power */
   const pwrHumNow = humOn ? PWR_HUMIDIFIER : 0;
   const pwrFanNow = fanOn ? PWR_FAN : 0;
   const pwrTotal  = pwrHumNow + pwrFanNow + PWR_ESP32;
@@ -288,9 +347,8 @@ function parseCSV(text, label) {
   });
   document.getElementById("powerToday").textContent = energy.toFixed(2) + " kWh";
 
-  document.getElementById("chartTag").textContent = `${label} · ${last.time.slice(0,5)}`;
-
-  document.getElementById("tbody").innerHTML = rows.slice().reverse().map(r => {
+  /* Table */
+  document.getElementById("tbody").innerHTML = rows.slice(-100).reverse().map(r => {
     const w = (r.humState === "ON" ? PWR_HUMIDIFIER : 0)
             + (r.fanState === "ON" ? PWR_FAN : 0) + PWR_ESP32;
     return `<tr>
@@ -304,29 +362,24 @@ function parseCSV(text, label) {
     </tr>`;
   }).join("");
 
-  drawChart(rows.slice(-MAX_POINTS));
-  document.getElementById("refreshed").textContent = "Updated " + new Date().toLocaleTimeString();
+  drawHumidityChart(rows.slice(-500));
+  drawTempChart(rows.slice(-500));
+  drawPowerChart(rows.slice(-500));
+
+  document.getElementById("refreshed").textContent =
+    `${label} · Updated ` + new Date().toLocaleTimeString();
 }
 
-/* ============== CHART ============== */
-function drawChart(rows) {
-  const labels = rows.map(r => r.time.slice(0,5));
-  const hum    = rows.map(r => r.hum);
-  const target = rows.map(r => r.target);
-  const power  = rows.map(r =>
-    (r.humState === "ON" ? PWR_HUMIDIFIER : 0) +
-    (r.fanState === "ON" ? PWR_FAN : 0) + PWR_ESP32);
-
-  if (chart) chart.destroy();
-
-  const gridPlugin = {
-    id: "greenGrid",
+/* ---------- Common plugin: dashed gridlines ---------- */
+function makeGridPlugin(values) {
+  return {
+    id: "grid",
     beforeDatasetsDraw(c) {
       const { ctx, chartArea, scales } = c;
       ctx.save();
       ctx.strokeStyle = "rgba(102,187,106,0.18)";
       ctx.setLineDash([3, 6]); ctx.lineWidth = 1;
-      [30, 55, 80].forEach(v => {
+      values.forEach(v => {
         const py = scales.y.getPixelForValue(v);
         ctx.beginPath();
         ctx.moveTo(chartArea.left, py);
@@ -336,31 +389,41 @@ function drawChart(rows) {
       ctx.restore();
     }
   };
+}
 
-  const endDot = {
+/* ---------- Common plugin: end dot ---------- */
+function makeEndDotPlugin(color, fillColor) {
+  return {
     id: "endDot",
     afterDatasetsDraw(c) {
       const { ctx, scales } = c;
       const x = scales.x.getPixelForValue(c.data.labels.length - 1);
       const y = scales.y.getPixelForValue(c.data.datasets[0].data.at(-1));
       ctx.save();
-      ctx.fillStyle = GREEN;
+      ctx.fillStyle = fillColor;
       ctx.beginPath(); ctx.arc(x, y, 5.5, 0, Math.PI * 2); ctx.fill();
-      ctx.strokeStyle = LIGHT; ctx.lineWidth = 2; ctx.stroke();
+      ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.stroke();
       ctx.restore();
     }
   };
+}
 
-  chart = new Chart(document.getElementById("chart"), {
+/* ---------- Humidity chart ---------- */
+function drawHumidityChart(rows) {
+  const labels = rows.map(r => r.time.slice(0,5));
+  const hum    = rows.map(r => r.hum);
+  const target = rows.map(() => targetHumidity);
+
+  if (chartHum) chartHum.destroy();
+
+  chartHum = new Chart(document.getElementById("chartHum"), {
     type: "line",
     data: { labels, datasets: [
       { label: "Humidity", data: hum, borderColor: GREEN,
         backgroundColor: "rgba(102,187,106,0.12)", fill: true, tension: 0.35,
-        pointRadius: 0, borderWidth: 2.5, yAxisID: "y" },
-      { label: "Target", data: target, borderColor: AMBER, pointRadius: 0,
-        borderWidth: 1.8, borderDash: [5, 4], yAxisID: "y" },
-      { label: "Power W", data: power, borderColor: "#ffb74d",
-        pointRadius: 0, borderWidth: 1.5, yAxisID: "y1", stepped: true }
+        pointRadius: 0, borderWidth: 2.5 },
+      { label: "Target", data: target, borderColor: AMBER,
+        pointRadius: 0, borderWidth: 1.6, borderDash: [5, 4] }
     ]},
     options: {
       responsive: true, maintainAspectRatio: false, animation: false,
@@ -370,89 +433,131 @@ function drawChart(rows) {
           titleColor: LIGHT, bodyColor: LIGHT } },
       scales: {
         x: { grid: { display: false }, border: { color: "#1f2b1c" },
-          ticks: { color: "#6b7f6b", maxTicksLimit: 4, font: { size: 10 } } },
-        y: { min: 30, max: 80, position: "left", grid: { display: false },
-          border: { display: false },
-          ticks: { color: "#6b7f6b", stepSize: 25, callback: v => v + "%", font: { size: 10 } } },
-        y1: { position: "right", grid: { display: false }, border: { display: false },
-          ticks: { color: "#b9803f", callback: v => v + "W", font: { size: 10 } },
-          min: 0, max: 400 }
+          ticks: { color: "#6b7f6b", maxTicksLimit: 4, font: { size: 9 } } },
+        y: { min: 30, max: 80, grid: { display: false }, border: { display: false },
+          ticks: { color: "#6b7f6b", stepSize: 25, callback: v => v + "%", font: { size: 9 } } }
       }
     },
-    plugins: [gridPlugin, endDot]
+    plugins: [makeGridPlugin([30, 55, 80]), makeEndDotPlugin(LIGHT, GREEN)]
   });
 }
 
-/* ============== CONFIG / TARGET CONTROL ============== */
-async function loadConfig() {
-  const url = `https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/${BRANCH}/config.json?t=${Date.now()}`;
-  try {
-    const res = await fetch(url);
-    const cfg = await res.json();
-    document.getElementById("inTarget").value = cfg.target_humidity;
-    document.getElementById("inBand").value   = cfg.humidity_band;
-    document.getElementById("inFan").value    = cfg.fan_on_humidity;
-    document.getElementById("currentTarget").textContent = cfg.target_humidity + "%";
-    document.getElementById("lastChanged").textContent =
-      new Date(cfg.updated_at).toLocaleString();
-  } catch {}
-}
+/* ---------- Temperature chart ---------- */
+function drawTempChart(rows) {
+  const labels = rows.map(r => r.time.slice(0,5));
+  const temp   = rows.map(r => r.temp);
+  const targetT= rows.map(() => targetTemp);
 
-async function saveTarget() {
-  const btn = document.getElementById("saveBtn");
-  const msg = document.getElementById("saveMsg");
-  btn.disabled = true; btn.textContent = "Saving…";
-  msg.textContent = ""; msg.style.color = "#81c784";
+  if (chartTemp) chartTemp.destroy();
 
-  const t = document.getElementById("inTarget").value;
-  const b = document.getElementById("inBand").value;
-  const f = document.getElementById("inFan").value;
-
-  try {
-    const res = await fetch(
-      `https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/actions/workflows/set-config.yml/dispatches`,
-      {
-        method: "POST",
-        headers: {
-          "Accept": "application/vnd.github+json",
-          "Authorization": `Bearer ${GITHUB_TOKEN}`,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          ref: BRANCH,
-          inputs: {
-            target_humidity: String(t),
-            humidity_band:   String(b),
-            fan_on_humidity: String(f)
-          }
-        })
+  chartTemp = new Chart(document.getElementById("chartTemp"), {
+    type: "line",
+    data: { labels, datasets: [
+      { label: "Temperature", data: temp, borderColor: ORANGE,
+        backgroundColor: "rgba(255,183,77,0.12)", fill: true, tension: 0.35,
+        pointRadius: 0, borderWidth: 2.5 },
+      { label: "Target", data: targetT, borderColor: DEEP,
+        pointRadius: 0, borderWidth: 1.6, borderDash: [5, 4] }
+    ]},
+    options: {
+      responsive: true, maintainAspectRatio: false, animation: false,
+      layout: { padding: { top: 18, right: 8, left: 0, bottom: 0 } },
+      plugins: { legend: { display: false },
+        tooltip: { backgroundColor: "#0b0f0b", borderColor: ORANGE, borderWidth: 1,
+          titleColor: LIGHT, bodyColor: LIGHT } },
+      scales: {
+        x: { grid: { display: false }, border: { color: "#1f2b1c" },
+          ticks: { color: "#6b7f6b", maxTicksLimit: 4, font: { size: 9 } } },
+        y: { min: 15, max: 40, grid: { display: false }, border: { display: false },
+          ticks: { color: "#6b7f6b", stepSize: 5, callback: v => v + "°", font: { size: 9 } } }
       }
-    );
-    if (!res.ok) throw new Error(await res.text());
-    msg.textContent = "✅ Saved — ESP32 will apply within 5 min";
-    setTimeout(loadConfig, 9000);
-  } catch (e) {
-    msg.style.color = "#ef5350";
-    msg.textContent = "❌ " + e.message.slice(0, 80);
-  } finally {
-    btn.disabled = false; btn.textContent = "Save to GitHub";
-  }
+    },
+    plugins: [makeGridPlugin([20, 25, 30, 35]), makeEndDotPlugin("#fff3e0", ORANGE)]
+  });
 }
 
-/* ============== TABS ============== */
+/* ---------- Power chart ---------- */
+function drawPowerChart(rows) {
+  const labels = rows.map(r => r.time.slice(0,5));
+  const power  = rows.map(r =>
+    (r.humState === "ON" ? PWR_HUMIDIFIER : 0) +
+    (r.fanState === "ON" ? PWR_FAN : 0) + PWR_ESP32);
+
+  if (chartPower) chartPower.destroy();
+
+  chartPower = new Chart(document.getElementById("chartPower"), {
+    type: "line",
+    data: { labels, datasets: [
+      { label: "Power", data: power, borderColor: "#8a6d3b",
+        backgroundColor: "rgba(138,109,59,0.15)", fill: true,
+        pointRadius: 0, borderWidth: 1.5, stepped: true }
+    ]},
+    options: {
+      responsive: true, maintainAspectRatio: false, animation: false,
+      layout: { padding: { top: 18, right: 8, left: 0, bottom: 0 } },
+      plugins: { legend: { display: false },
+        tooltip: { backgroundColor: "#0b0f0b", borderColor: "#8a6d3b", borderWidth: 1,
+          titleColor: LIGHT, bodyColor: LIGHT } },
+      scales: {
+        x: { grid: { display: false }, border: { color: "#1f2b1c" },
+          ticks: { color: "#6b7f6b", maxTicksLimit: 4, font: { size: 9 } } },
+        y: { min: 0, max: 400, grid: { display: false }, border: { display: false },
+          ticks: { color: "#6b7f6b", stepSize: 100, callback: v => v + "W", font: { size: 9 } } }
+      }
+    }
+  });
+}
+
+/* ---------- Tabs ---------- */
 document.getElementById("tabs").addEventListener("click", e => {
   const btn = e.target.closest(".tab"); if (!btn) return;
   document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
   btn.classList.add("active");
   currentDay = +btn.dataset.day;
-  loadData();
+  render();
 });
 
-/* ============== INIT ============== */
-loadData();
-loadConfig();
-setInterval(loadData, REFRESH_MS);
-setInterval(loadConfig, 60000);
+/* ---------- Save ---------- */
+function saveTarget() {
+  targetHumidity = +document.getElementById("inTarget").value;
+  humidityBand   = +document.getElementById("inBand").value;
+  fanOnHumidity  = +document.getElementById("inFan").value;
+  targetTemp     = +document.getElementById("inTargetTemp").value;
+  tempBand       = +document.getElementById("inTempBand").value;
+  coolerOnTemp   = +document.getElementById("inCooler").value;
+
+  DEMO_DATA[0] = generateDayData(0, targetHumidity, targetTemp);
+
+  const msg = document.getElementById("saveMsg");
+  msg.textContent = `✅ Saved: ${targetHumidity}% · ${targetTemp}°C`;
+  setTimeout(() => { msg.textContent = ""; }, 3000);
+  render();
+}
+
+/* ---------- Live tick ---------- */
+setInterval(() => {
+  const rows = DEMO_DATA[0];
+  const now = new Date();
+  const hour = now.getHours() + now.getMinutes() / 60;
+
+  const hum = targetHumidity + 6 * Math.sin(hour / 3) + (Math.random() - 0.5) * 2;
+  const temp = targetTemp + 4 * Math.sin((hour - 6) / 4) + (Math.random() - 0.5) * 0.8;
+
+  rows.push({
+    date: now.toISOString().slice(0,10),
+    time: now.toTimeString().slice(0,8),
+    temp: +temp.toFixed(1),
+    hum: +hum.toFixed(1),
+    target: targetHumidity,
+    targetTemp,
+    humState: hum < targetHumidity - 2 ? "ON" : "OFF",
+    fanState: (hum > fanOnHumidity || temp > coolerOnTemp) ? "ON" : "OFF"
+  });
+
+  if (currentDay === 0) render();
+}, 2000);
+
+render();
 </script>
 </body>
 </html>
