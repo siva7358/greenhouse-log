@@ -3,111 +3,115 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<meta name="theme-color" content="#0b0f0b">
-<title>Smart Greenhouse — Demo</title>
+<meta name="theme-color" content="#000000">
+<title>Smart Greenhouse</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-  html, body { background: #0b0f0b; color: #e8f5e9;
+  html, body { background: #000; color: #f5b301;
     font-family: -apple-system, "Segoe UI", Roboto, sans-serif; min-height: 100%; overflow-x: hidden; }
   body { padding: 16px 14px 40px; max-width: 520px; margin: 0 auto; }
 
-  /* Dual gauges */
-  .gauges {
-    display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px;
-  }
+  /* ---------- Dual gauges ---------- */
+  .gauges { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
   .gauge-card {
-    background: #12180f; border: 1px solid #1f2b1c;
+    background: #0a0a0a; border: 1px solid #3a2c00;
     border-radius: 20px; padding: 16px 10px; text-align: center;
   }
   .gauge-wrap { position: relative; width: 130px; height: 130px; margin: 0 auto 10px; }
   .gauge-svg { transform: rotate(-90deg); }
-  .gauge-bg { fill: none; stroke: #1f2b1c; stroke-width: 10; }
-  .gauge-fg-hum  { fill: none; stroke: #66bb6a; stroke-width: 10;
-    stroke-linecap: round; transition: stroke-dashoffset 0.6s ease; }
-  .gauge-fg-temp { fill: none; stroke: #ffb74d; stroke-width: 10;
+  .gauge-bg { fill: none; stroke: #2a2000; stroke-width: 10; }
+  .gauge-fg { fill: none; stroke: #f5b301; stroke-width: 10;
     stroke-linecap: round; transition: stroke-dashoffset 0.6s ease; }
   .gauge-center { position: absolute; inset: 0; display: flex;
     flex-direction: column; align-items: center; justify-content: center; }
-  .gauge-val { font-size: 1.6rem; font-weight: 800; line-height: 1; }
-  .gauge-val.hum  { color: #a5d6a7; }
-  .gauge-val.temp { color: #ffcc80; }
-  .gauge-lbl { font-size: 0.62rem; color: #6b7f6b; margin-top: 3px;
+  .gauge-val { font-size: 1.6rem; font-weight: 800; line-height: 1; color: #f5b301; }
+  .gauge-lbl { font-size: 0.62rem; color: #f5b301; opacity: 0.65; margin-top: 3px;
     letter-spacing: 0.5px; text-transform: uppercase; }
-  .gauge-target { font-size: 0.68rem; color: #8aa88a; margin-top: 4px; }
-  .gauge-target b { color: #a5d6a7; }
+  .gauge-target { font-size: 0.68rem; color: #f5b301; opacity: 0.7; margin-top: 4px; }
+  .gauge-target b { color: #f5b301; opacity: 1; }
 
-  /* Status row */
+  /* ---------- Status row ---------- */
   .status-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
-  .status-card { background: #12180f; border: 1px solid #1f2b1c; border-radius: 16px;
+  .status-card { background: #0a0a0a; border: 1px solid #3a2c00; border-radius: 16px;
     padding: 14px; display: flex; flex-direction: column; gap: 6px; }
   .status-card.wide { grid-column: 1 / -1; }
-  .status-card .l { font-size: 0.68rem; color: #6b7f6b; text-transform: uppercase; letter-spacing: 0.5px; }
+  .status-card .l { font-size: 0.68rem; color: #f5b301; opacity: 0.65;
+    text-transform: uppercase; letter-spacing: 0.5px; }
   .status-card .row { display: flex; justify-content: space-between; align-items: center; }
-  .status-card .v { font-size: 1.15rem; font-weight: 700; color: #a5d6a7; }
-  .pill { padding: 4px 12px; border-radius: 20px; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.4px; }
-  .pill.on  { background: #1f3a1f; color: #81c784; }
-  .pill.off { background: #2b1a0f; color: #b9803f; }
+  .status-card .v { font-size: 1.15rem; font-weight: 700; color: #f5b301; }
+  .pill { padding: 4px 12px; border-radius: 20px; font-size: 0.72rem;
+    font-weight: 700; letter-spacing: 0.4px; }
+  .pill.on  { background: #f5b301; color: #000; }
+  .pill.off { background: #2a2000; color: #8a6a00; }
 
   .power-detail { display: flex; justify-content: space-between; font-size: 0.72rem;
-    color: #8aa88a; padding-top: 4px; border-top: 1px solid #1a231a; margin-top: 4px; }
-  .power-detail span:last-child { color: #a5d6a7; font-weight: 600; }
+    color: #f5b301; opacity: 0.7;
+    padding-top: 4px; border-top: 1px solid #2a2000; margin-top: 4px; }
+  .power-detail span:last-child { color: #f5b301; font-weight: 600; opacity: 1; }
 
-  /* Control card */
-  .control-card { background: #12180f; border: 1px solid #1f2b1c; border-radius: 16px;
+  /* ---------- Control card ---------- */
+  .control-card { background: #0a0a0a; border: 1px solid #3a2c00; border-radius: 16px;
     padding: 14px; margin-bottom: 14px; }
-  .control-title { font-size: 0.9rem; font-weight: 700; color: #a5d6a7; margin-bottom: 12px; }
+  .control-title { font-size: 0.9rem; font-weight: 700; color: #f5b301; margin-bottom: 12px; }
   .control-section {
-    font-size: 0.7rem; color: #6b7f6b; text-transform: uppercase;
-    letter-spacing: 0.5px; margin: 14px 0 8px;
-    padding-top: 10px; border-top: 1px solid #1a231a;
+    font-size: 0.7rem; color: #f5b301; opacity: 0.65;
+    text-transform: uppercase; letter-spacing: 0.5px;
+    margin: 14px 0 8px; padding-top: 10px; border-top: 1px solid #2a2000;
   }
   .control-section:first-of-type { margin-top: 0; padding-top: 0; border-top: none; }
   .control-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-  .control-row label { font-size: 0.8rem; color: #8aa88a; }
-  .control-row input { width: 90px; background: #0e140c; border: 1px solid #1f2b1c;
-    border-radius: 8px; padding: 8px 10px; color: #a5d6a7; font-size: 0.9rem;
-    font-weight: 700; text-align: center; outline: none; }
-  .control-row input:focus { border-color: #66bb6a; }
-  .control-row input.temp-input { color: #ffcc80; }
-  .save-btn { width: 100%; padding: 12px; background: #66bb6a; color: #0b0f0b;
+  .control-row label { font-size: 0.8rem; color: #f5b301; opacity: 0.8; }
+  .control-row input { width: 90px; background: #000; border: 1px solid #3a2c00;
+    border-radius: 8px; padding: 8px 10px; color: #f5b301;
+    font-size: 0.9rem; font-weight: 700; text-align: center; outline: none; }
+  .control-row input:focus { border-color: #f5b301; }
+  .save-btn { width: 100%; padding: 12px; background: #f5b301; color: #000;
     border: none; border-radius: 10px; font-size: 0.9rem; font-weight: 700;
     cursor: pointer; margin-top: 6px; }
   .save-btn:active { opacity: 0.8; }
-  .save-msg { text-align: center; font-size: 0.75rem; color: #81c784; margin-top: 8px; min-height: 16px; }
+  .save-msg { text-align: center; font-size: 0.75rem; color: #f5b301; margin-top: 8px; min-height: 16px; }
 
-  .tabs { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; margin-bottom: 12px; scrollbar-width: none; }
+  /* ---------- Tabs ---------- */
+  .tabs { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px;
+    margin-bottom: 12px; scrollbar-width: none; }
   .tabs::-webkit-scrollbar { display: none; }
-  .tab { flex: 0 0 auto; padding: 8px 16px; border-radius: 20px; font-size: 0.78rem; font-weight: 600;
-    color: #a5d6a7; background: #12180f; border: 1px solid #1f2b1c; cursor: pointer; }
-  .tab.active { background: #66bb6a; color: #0b0f0b; border-color: #66bb6a; }
+  .tab { flex: 0 0 auto; padding: 8px 16px; border-radius: 20px; font-size: 0.78rem;
+    font-weight: 600; color: #f5b301; background: #0a0a0a;
+    border: 1px solid #3a2c00; cursor: pointer; }
+  .tab.active { background: #f5b301; color: #000; border-color: #f5b301; }
 
-  /* Charts */
-  .chart-wrap { position: relative; background: #12180f; border: 1px solid #1f2b1c;
+  /* ---------- Charts ---------- */
+  .chart-wrap { position: relative; background: #0a0a0a; border: 1px solid #3a2c00;
     border-radius: 18px; padding: 14px 8px 8px; height: 220px; margin-bottom: 12px; }
   .chart-wrap.power-chart { height: 180px; }
   .chart-tag { position: absolute; top: 10px; left: 14px; font-size: 0.72rem;
-    font-weight: 700; color: #a5d6a7; z-index: 5; letter-spacing: 0.5px; }
+    font-weight: 700; color: #f5b301; z-index: 5; letter-spacing: 0.5px; }
   .chart-legend {
     position: absolute; top: 10px; right: 14px;
-    display: flex; gap: 10px; font-size: 0.62rem; color: #8aa88a; z-index: 5;
+    display: flex; gap: 10px; font-size: 0.62rem; color: #f5b301; opacity: 0.75; z-index: 5;
   }
   .chart-legend .dot { display: inline-block; width: 8px; height: 8px;
     border-radius: 50%; margin-right: 3px; vertical-align: middle; }
   canvas { width: 100% !important; height: 100% !important; }
 
-  .table-box { background: #12180f; border: 1px solid #1f2b1c; border-radius: 16px;
+  /* ---------- Table ---------- */
+  .table-box { background: #0a0a0a; border: 1px solid #3a2c00; border-radius: 16px;
     overflow: hidden; max-height: 380px; overflow-y: auto; }
   table { width: 100%; border-collapse: collapse; font-size: 0.74rem; }
-  th, td { padding: 9px 8px; text-align: left; border-bottom: 1px solid #1a231a; color: #cfe8cf; }
-  th { background: #0e140c; font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.4px;
-    color: #6b7f6b; position: sticky; top: 0; z-index: 2; }
-  tbody tr:nth-child(even) { background: #0f150d; }
+  th, td { padding: 9px 8px; text-align: left;
+    border-bottom: 1px solid #2a2000; color: #f5b301; }
+  th { background: #000; font-size: 0.62rem; text-transform: uppercase;
+    letter-spacing: 0.4px; color: #f5b301; opacity: 0.65;
+    position: sticky; top: 0; z-index: 2; }
+  tbody tr:nth-child(even) { background: #060600; }
   tbody tr:last-child td { border-bottom: none; }
   .badge { padding: 2px 7px; border-radius: 20px; font-size: 0.66rem; font-weight: 700; }
-  .badge.on  { background: #1f3a1f; color: #81c784; }
-  .badge.off { background: #2b1a0f; color: #b9803f; }
-  .refresh { text-align: center; font-size: 0.7rem; color: #6b7f6b; margin-top: 14px; }
+  .badge.on  { background: #f5b301; color: #000; }
+  .badge.off { background: #2a2000; color: #8a6a00; }
+
+  .refresh { text-align: center; font-size: 0.7rem; color: #f5b301;
+    opacity: 0.55; margin-top: 14px; }
 </style>
 </head>
 <body>
@@ -118,11 +122,11 @@
       <div class="gauge-wrap">
         <svg class="gauge-svg" width="130" height="130" viewBox="0 0 130 130">
           <circle class="gauge-bg" cx="65" cy="65" r="55"></circle>
-          <circle class="gauge-fg-hum" id="gaugeHum" cx="65" cy="65" r="55"
+          <circle class="gauge-fg" id="gaugeHum" cx="65" cy="65" r="55"
                   stroke-dasharray="345.6" stroke-dashoffset="345.6"></circle>
         </svg>
         <div class="gauge-center">
-          <div class="gauge-val hum" id="gaugeHumVal">--%</div>
+          <div class="gauge-val" id="gaugeHumVal">--%</div>
           <div class="gauge-lbl">Humidity</div>
         </div>
       </div>
@@ -133,11 +137,11 @@
       <div class="gauge-wrap">
         <svg class="gauge-svg" width="130" height="130" viewBox="0 0 130 130">
           <circle class="gauge-bg" cx="65" cy="65" r="55"></circle>
-          <circle class="gauge-fg-temp" id="gaugeTemp" cx="65" cy="65" r="55"
+          <circle class="gauge-fg" id="gaugeTemp" cx="65" cy="65" r="55"
                   stroke-dasharray="345.6" stroke-dashoffset="345.6"></circle>
         </svg>
         <div class="gauge-center">
-          <div class="gauge-val temp" id="gaugeTempVal">--°</div>
+          <div class="gauge-val" id="gaugeTempVal">--°</div>
           <div class="gauge-lbl">Temp</div>
         </div>
       </div>
@@ -187,11 +191,11 @@
 
     <div class="control-section">Temperature</div>
     <div class="control-row"><label>Target temperature (°C)</label>
-      <input type="number" id="inTargetTemp" min="10" max="40" value="27" class="temp-input"></div>
+      <input type="number" id="inTargetTemp" min="10" max="40" value="27"></div>
     <div class="control-row"><label>± Temperature band (°C)</label>
-      <input type="number" id="inTempBand" min="0" max="5" step="0.5" value="1" class="temp-input"></div>
+      <input type="number" id="inTempBand" min="0" max="5" step="0.5" value="1"></div>
     <div class="control-row"><label>Cooler ON above (°C)</label>
-      <input type="number" id="inCooler" min="10" max="40" value="32" class="temp-input"></div>
+      <input type="number" id="inCooler" min="10" max="40" value="32"></div>
 
     <button id="saveBtn" class="save-btn" onclick="saveTarget()">Save</button>
     <div class="save-msg" id="saveMsg"></div>
@@ -208,8 +212,8 @@
   <div class="chart-wrap">
     <div class="chart-tag">HUMIDITY</div>
     <div class="chart-legend">
-      <span><span class="dot" style="background:#66bb6a"></span>Actual</span>
-      <span><span class="dot" style="background:#b9803f"></span>Target</span>
+      <span><span class="dot" style="background:#f5b301"></span>Actual</span>
+      <span><span class="dot" style="background:#f5b301;opacity:0.4"></span>Target</span>
     </div>
     <canvas id="chartHum"></canvas>
   </div>
@@ -218,8 +222,8 @@
   <div class="chart-wrap">
     <div class="chart-tag">TEMPERATURE</div>
     <div class="chart-legend">
-      <span><span class="dot" style="background:#ffb74d"></span>Actual</span>
-      <span><span class="dot" style="background:#e65100"></span>Target</span>
+      <span><span class="dot" style="background:#f5b301"></span>Actual</span>
+      <span><span class="dot" style="background:#f5b301;opacity:0.4"></span>Target</span>
     </div>
     <canvas id="chartTemp"></canvas>
   </div>
@@ -228,7 +232,7 @@
   <div class="chart-wrap power-chart">
     <div class="chart-tag">POWER</div>
     <div class="chart-legend">
-      <span><span class="dot" style="background:#8a6d3b"></span>Watts</span>
+      <span><span class="dot" style="background:#f5b301"></span>Watts</span>
     </div>
     <canvas id="chartPower"></canvas>
   </div>
@@ -247,10 +251,10 @@
 
 <script>
 /* ============================================================
-   DEMO — dual gauges, three charts, settable targets
+   DEMO — all-yellow theme, settable targets, 3 charts
    ============================================================ */
 
-const GREEN = "#66bb6a", LIGHT = "#a5d6a7", AMBER = "#b9803f", ORANGE = "#ffb74d", DEEP = "#e65100";
+const YELLOW = "#f5b301";
 const PWR_HUMIDIFIER = 300, PWR_FAN = 25, PWR_ESP32 = 1.5;
 
 let currentDay = 0;
@@ -303,33 +307,28 @@ function render() {
   const last = rows[rows.length - 1];
   const label = currentDay === 0 ? "Today" : currentDay === 1 ? "Yesterday" : `${currentDay} days ago`;
 
-  /* Humidity gauge */
   const humPct = Math.max(0, Math.min(1, last.hum / 100));
   document.getElementById("gaugeHum").style.strokeDashoffset = 345.6 * (1 - humPct);
   document.getElementById("gaugeHumVal").textContent = last.hum.toFixed(0) + "%";
   document.getElementById("targetNote").textContent = targetHumidity + "%";
 
-  /* Temperature gauge */
   const tempPct = Math.max(0, Math.min(1, (last.temp - 10) / 30));
   document.getElementById("gaugeTemp").style.strokeDashoffset = 345.6 * (1 - tempPct);
   document.getElementById("gaugeTempVal").textContent = last.temp.toFixed(1) + "°";
   document.getElementById("targetTempNote").textContent = targetTemp + "°C";
 
-  /* Humidifier */
   const humOn = last.humState === "ON";
   document.getElementById("humStatusTxt").textContent = humOn ? "Running" : "Idle";
   const humPill = document.getElementById("humPill");
   humPill.textContent = last.humState;
   humPill.className = "pill " + (humOn ? "on" : "off");
 
-  /* Fan */
   const fanOn = last.fanState === "ON";
   document.getElementById("fanStatusTxt").textContent = fanOn ? "Running" : "Idle";
   const fanPill = document.getElementById("fanPill");
   fanPill.textContent = last.fanState;
   fanPill.className = "pill " + (fanOn ? "on" : "off");
 
-  /* Power */
   const pwrHumNow = humOn ? PWR_HUMIDIFIER : 0;
   const pwrFanNow = fanOn ? PWR_FAN : 0;
   const pwrTotal  = pwrHumNow + pwrFanNow + PWR_ESP32;
@@ -347,7 +346,6 @@ function render() {
   });
   document.getElementById("powerToday").textContent = energy.toFixed(2) + " kWh";
 
-  /* Table */
   document.getElementById("tbody").innerHTML = rows.slice(-100).reverse().map(r => {
     const w = (r.humState === "ON" ? PWR_HUMIDIFIER : 0)
             + (r.fanState === "ON" ? PWR_FAN : 0) + PWR_ESP32;
@@ -370,14 +368,14 @@ function render() {
     `${label} · Updated ` + new Date().toLocaleTimeString();
 }
 
-/* ---------- Common plugin: dashed gridlines ---------- */
+/* ---------- Common plugins ---------- */
 function makeGridPlugin(values) {
   return {
     id: "grid",
     beforeDatasetsDraw(c) {
       const { ctx, chartArea, scales } = c;
       ctx.save();
-      ctx.strokeStyle = "rgba(102,187,106,0.18)";
+      ctx.strokeStyle = "rgba(245,179,1,0.18)";
       ctx.setLineDash([3, 6]); ctx.lineWidth = 1;
       values.forEach(v => {
         const py = scales.y.getPixelForValue(v);
@@ -391,8 +389,7 @@ function makeGridPlugin(values) {
   };
 }
 
-/* ---------- Common plugin: end dot ---------- */
-function makeEndDotPlugin(color, fillColor) {
+function makeEndDotPlugin() {
   return {
     id: "endDot",
     afterDatasetsDraw(c) {
@@ -400,9 +397,9 @@ function makeEndDotPlugin(color, fillColor) {
       const x = scales.x.getPixelForValue(c.data.labels.length - 1);
       const y = scales.y.getPixelForValue(c.data.datasets[0].data.at(-1));
       ctx.save();
-      ctx.fillStyle = fillColor;
+      ctx.fillStyle = YELLOW;
       ctx.beginPath(); ctx.arc(x, y, 5.5, 0, Math.PI * 2); ctx.fill();
-      ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.stroke();
+      ctx.strokeStyle = "#000"; ctx.lineWidth = 2; ctx.stroke();
       ctx.restore();
     }
   };
@@ -419,26 +416,26 @@ function drawHumidityChart(rows) {
   chartHum = new Chart(document.getElementById("chartHum"), {
     type: "line",
     data: { labels, datasets: [
-      { label: "Humidity", data: hum, borderColor: GREEN,
-        backgroundColor: "rgba(102,187,106,0.12)", fill: true, tension: 0.35,
+      { label: "Humidity", data: hum, borderColor: YELLOW,
+        backgroundColor: "rgba(245,179,1,0.12)", fill: true, tension: 0.35,
         pointRadius: 0, borderWidth: 2.5 },
-      { label: "Target", data: target, borderColor: AMBER,
-        pointRadius: 0, borderWidth: 1.6, borderDash: [5, 4] }
+      { label: "Target", data: target, borderColor: YELLOW,
+        pointRadius: 0, borderWidth: 1.4, borderDash: [5, 4], opacity: 0.5 }
     ]},
     options: {
       responsive: true, maintainAspectRatio: false, animation: false,
       layout: { padding: { top: 18, right: 8, left: 0, bottom: 0 } },
       plugins: { legend: { display: false },
-        tooltip: { backgroundColor: "#0b0f0b", borderColor: GREEN, borderWidth: 1,
-          titleColor: LIGHT, bodyColor: LIGHT } },
+        tooltip: { backgroundColor: "#000", borderColor: YELLOW, borderWidth: 1,
+          titleColor: YELLOW, bodyColor: YELLOW } },
       scales: {
-        x: { grid: { display: false }, border: { color: "#1f2b1c" },
-          ticks: { color: "#6b7f6b", maxTicksLimit: 4, font: { size: 9 } } },
+        x: { grid: { display: false }, border: { color: "#3a2c00" },
+          ticks: { color: YELLOW, maxTicksLimit: 4, font: { size: 9 } } },
         y: { min: 30, max: 80, grid: { display: false }, border: { display: false },
-          ticks: { color: "#6b7f6b", stepSize: 25, callback: v => v + "%", font: { size: 9 } } }
+          ticks: { color: YELLOW, stepSize: 25, callback: v => v + "%", font: { size: 9 } } }
       }
     },
-    plugins: [makeGridPlugin([30, 55, 80]), makeEndDotPlugin(LIGHT, GREEN)]
+    plugins: [makeGridPlugin([30, 55, 80]), makeEndDotPlugin()]
   });
 }
 
@@ -453,26 +450,26 @@ function drawTempChart(rows) {
   chartTemp = new Chart(document.getElementById("chartTemp"), {
     type: "line",
     data: { labels, datasets: [
-      { label: "Temperature", data: temp, borderColor: ORANGE,
-        backgroundColor: "rgba(255,183,77,0.12)", fill: true, tension: 0.35,
+      { label: "Temperature", data: temp, borderColor: YELLOW,
+        backgroundColor: "rgba(245,179,1,0.12)", fill: true, tension: 0.35,
         pointRadius: 0, borderWidth: 2.5 },
-      { label: "Target", data: targetT, borderColor: DEEP,
-        pointRadius: 0, borderWidth: 1.6, borderDash: [5, 4] }
+      { label: "Target", data: targetT, borderColor: YELLOW,
+        pointRadius: 0, borderWidth: 1.4, borderDash: [5, 4], opacity: 0.5 }
     ]},
     options: {
       responsive: true, maintainAspectRatio: false, animation: false,
       layout: { padding: { top: 18, right: 8, left: 0, bottom: 0 } },
       plugins: { legend: { display: false },
-        tooltip: { backgroundColor: "#0b0f0b", borderColor: ORANGE, borderWidth: 1,
-          titleColor: LIGHT, bodyColor: LIGHT } },
+        tooltip: { backgroundColor: "#000", borderColor: YELLOW, borderWidth: 1,
+          titleColor: YELLOW, bodyColor: YELLOW } },
       scales: {
-        x: { grid: { display: false }, border: { color: "#1f2b1c" },
-          ticks: { color: "#6b7f6b", maxTicksLimit: 4, font: { size: 9 } } },
+        x: { grid: { display: false }, border: { color: "#3a2c00" },
+          ticks: { color: YELLOW, maxTicksLimit: 4, font: { size: 9 } } },
         y: { min: 15, max: 40, grid: { display: false }, border: { display: false },
-          ticks: { color: "#6b7f6b", stepSize: 5, callback: v => v + "°", font: { size: 9 } } }
+          ticks: { color: YELLOW, stepSize: 5, callback: v => v + "°", font: { size: 9 } } }
       }
     },
-    plugins: [makeGridPlugin([20, 25, 30, 35]), makeEndDotPlugin("#fff3e0", ORANGE)]
+    plugins: [makeGridPlugin([20, 25, 30, 35]), makeEndDotPlugin()]
   });
 }
 
@@ -488,21 +485,21 @@ function drawPowerChart(rows) {
   chartPower = new Chart(document.getElementById("chartPower"), {
     type: "line",
     data: { labels, datasets: [
-      { label: "Power", data: power, borderColor: "#8a6d3b",
-        backgroundColor: "rgba(138,109,59,0.15)", fill: true,
+      { label: "Power", data: power, borderColor: YELLOW,
+        backgroundColor: "rgba(245,179,1,0.12)", fill: true,
         pointRadius: 0, borderWidth: 1.5, stepped: true }
     ]},
     options: {
       responsive: true, maintainAspectRatio: false, animation: false,
       layout: { padding: { top: 18, right: 8, left: 0, bottom: 0 } },
       plugins: { legend: { display: false },
-        tooltip: { backgroundColor: "#0b0f0b", borderColor: "#8a6d3b", borderWidth: 1,
-          titleColor: LIGHT, bodyColor: LIGHT } },
+        tooltip: { backgroundColor: "#000", borderColor: YELLOW, borderWidth: 1,
+          titleColor: YELLOW, bodyColor: YELLOW } },
       scales: {
-        x: { grid: { display: false }, border: { color: "#1f2b1c" },
-          ticks: { color: "#6b7f6b", maxTicksLimit: 4, font: { size: 9 } } },
+        x: { grid: { display: false }, border: { color: "#3a2c00" },
+          ticks: { color: YELLOW, maxTicksLimit: 4, font: { size: 9 } } },
         y: { min: 0, max: 400, grid: { display: false }, border: { display: false },
-          ticks: { color: "#6b7f6b", stepSize: 100, callback: v => v + "W", font: { size: 9 } } }
+          ticks: { color: YELLOW, stepSize: 100, callback: v => v + "W", font: { size: 9 } } }
       }
     }
   });
