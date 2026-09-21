@@ -2,116 +2,353 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#000000">
 <title>Smart Greenhouse</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-  html, body { background: #000; color: #f5b301;
-    font-family: -apple-system, "Segoe UI", Roboto, sans-serif; min-height: 100%; overflow-x: hidden; }
-  body { padding: 16px 14px 40px; max-width: 520px; margin: 0 auto; }
+
+  html, body {
+    width: 100%;
+    min-height: 100%;
+    overflow-x: hidden;
+    background: #000;
+    color: #f5b301;
+    font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+
+  body {
+    padding: 16px 14px 40px;
+    /* NO max-width — fills full screen edge-to-edge */
+  }
 
   /* ---------- Dual gauges ---------- */
-  .gauges { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
-  .gauge-card {
-    background: #0a0a0a; border: 1px solid #3a2c00;
-    border-radius: 20px; padding: 16px 10px; text-align: center;
+  .gauges {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 14px;
   }
-  .gauge-wrap { position: relative; width: 130px; height: 130px; margin: 0 auto 10px; }
-  .gauge-svg { transform: rotate(-90deg); }
-  .gauge-bg { fill: none; stroke: #2a2000; stroke-width: 10; }
-  .gauge-fg { fill: none; stroke: #f5b301; stroke-width: 10;
-    stroke-linecap: round; transition: stroke-dashoffset 0.6s ease; }
-  .gauge-center { position: absolute; inset: 0; display: flex;
-    flex-direction: column; align-items: center; justify-content: center; }
+  .gauge-card {
+    background: #0a0a0a;
+    border: 1px solid #3a2c00;
+    border-radius: 20px;
+    padding: 16px 10px;
+    text-align: center;
+  }
+  .gauge-wrap {
+    position: relative;
+    width: 100%;
+    max-width: 130px;
+    aspect-ratio: 1 / 1;
+    margin: 0 auto 10px;
+  }
+  .gauge-svg {
+    width: 100%;
+    height: 100%;
+    transform: rotate(-90deg);
+  }
+  .gauge-bg {
+    fill: none;
+    stroke: #2a2000;
+    stroke-width: 10;
+  }
+  .gauge-fg {
+    fill: none;
+    stroke: #f5b301;
+    stroke-width: 10;
+    stroke-linecap: round;
+    transition: stroke-dashoffset 0.6s ease;
+  }
+  .gauge-center {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
   .gauge-val { font-size: 1.6rem; font-weight: 800; line-height: 1; color: #f5b301; }
-  .gauge-lbl { font-size: 0.62rem; color: #f5b301; opacity: 0.65; margin-top: 3px;
-    letter-spacing: 0.5px; text-transform: uppercase; }
-  .gauge-target { font-size: 0.68rem; color: #f5b301; opacity: 0.7; margin-top: 4px; }
+  .gauge-lbl {
+    font-size: 0.62rem;
+    color: #f5b301;
+    opacity: 0.65;
+    margin-top: 3px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+  .gauge-target {
+    font-size: 0.68rem;
+    color: #f5b301;
+    opacity: 0.7;
+    margin-top: 4px;
+  }
   .gauge-target b { color: #f5b301; opacity: 1; }
 
   /* ---------- Status row ---------- */
-  .status-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
-  .status-card { background: #0a0a0a; border: 1px solid #3a2c00; border-radius: 16px;
-    padding: 14px; display: flex; flex-direction: column; gap: 6px; }
+  .status-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  .status-card {
+    background: #0a0a0a;
+    border: 1px solid #3a2c00;
+    border-radius: 16px;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
   .status-card.wide { grid-column: 1 / -1; }
-  .status-card .l { font-size: 0.68rem; color: #f5b301; opacity: 0.65;
-    text-transform: uppercase; letter-spacing: 0.5px; }
-  .status-card .row { display: flex; justify-content: space-between; align-items: center; }
-  .status-card .v { font-size: 1.15rem; font-weight: 700; color: #f5b301; }
-  .pill { padding: 4px 12px; border-radius: 20px; font-size: 0.72rem;
-    font-weight: 700; letter-spacing: 0.4px; }
+  .status-card .l {
+    font-size: 0.68rem;
+    color: #f5b301;
+    opacity: 0.65;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .status-card .row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+  }
+  .status-card .v {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #f5b301;
+  }
+  .pill {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+  }
   .pill.on  { background: #f5b301; color: #000; }
   .pill.off { background: #2a2000; color: #8a6a00; }
 
-  .power-detail { display: flex; justify-content: space-between; font-size: 0.72rem;
-    color: #f5b301; opacity: 0.7;
-    padding-top: 4px; border-top: 1px solid #2a2000; margin-top: 4px; }
+  .power-detail {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.72rem;
+    color: #f5b301;
+    opacity: 0.7;
+    padding-top: 4px;
+    border-top: 1px solid #2a2000;
+    margin-top: 4px;
+  }
   .power-detail span:last-child { color: #f5b301; font-weight: 600; opacity: 1; }
 
   /* ---------- Control card ---------- */
-  .control-card { background: #0a0a0a; border: 1px solid #3a2c00; border-radius: 16px;
-    padding: 14px; margin-bottom: 14px; }
-  .control-title { font-size: 0.9rem; font-weight: 700; color: #f5b301; margin-bottom: 12px; }
-  .control-section {
-    font-size: 0.7rem; color: #f5b301; opacity: 0.65;
-    text-transform: uppercase; letter-spacing: 0.5px;
-    margin: 14px 0 8px; padding-top: 10px; border-top: 1px solid #2a2000;
+  .control-card {
+    background: #0a0a0a;
+    border: 1px solid #3a2c00;
+    border-radius: 16px;
+    padding: 14px;
+    margin-bottom: 14px;
   }
-  .control-section:first-of-type { margin-top: 0; padding-top: 0; border-top: none; }
-  .control-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-  .control-row label { font-size: 0.8rem; color: #f5b301; opacity: 0.8; }
-  .control-row input { width: 90px; background: #000; border: 1px solid #3a2c00;
-    border-radius: 8px; padding: 8px 10px; color: #f5b301;
-    font-size: 0.9rem; font-weight: 700; text-align: center; outline: none; }
+  .control-title {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #f5b301;
+    margin-bottom: 12px;
+  }
+  .control-section {
+    font-size: 0.7rem;
+    color: #f5b301;
+    opacity: 0.65;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 14px 0 8px;
+    padding-top: 10px;
+    border-top: 1px solid #2a2000;
+  }
+  .control-section:first-of-type {
+    margin-top: 0;
+    padding-top: 0;
+    border-top: none;
+  }
+  .control-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    gap: 8px;
+  }
+  .control-row label {
+    font-size: 0.8rem;
+    color: #f5b301;
+    opacity: 0.8;
+    flex: 1;
+  }
+  .control-row input {
+    width: 90px;
+    background: #000;
+    border: 1px solid #3a2c00;
+    border-radius: 8px;
+    padding: 8px 10px;
+    color: #f5b301;
+    font-size: 0.9rem;
+    font-weight: 700;
+    text-align: center;
+    outline: none;
+  }
   .control-row input:focus { border-color: #f5b301; }
-  .save-btn { width: 100%; padding: 12px; background: #f5b301; color: #000;
-    border: none; border-radius: 10px; font-size: 0.9rem; font-weight: 700;
-    cursor: pointer; margin-top: 6px; }
+  .save-btn {
+    width: 100%;
+    padding: 12px;
+    background: #f5b301;
+    color: #000;
+    border: none;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    margin-top: 6px;
+  }
   .save-btn:active { opacity: 0.8; }
-  .save-msg { text-align: center; font-size: 0.75rem; color: #f5b301; margin-top: 8px; min-height: 16px; }
+  .save-msg {
+    text-align: center;
+    font-size: 0.75rem;
+    color: #f5b301;
+    margin-top: 8px;
+    min-height: 16px;
+  }
 
   /* ---------- Tabs ---------- */
-  .tabs { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px;
-    margin-bottom: 12px; scrollbar-width: none; }
+  .tabs {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    margin-bottom: 12px;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
   .tabs::-webkit-scrollbar { display: none; }
-  .tab { flex: 0 0 auto; padding: 8px 16px; border-radius: 20px; font-size: 0.78rem;
-    font-weight: 600; color: #f5b301; background: #0a0a0a;
-    border: 1px solid #3a2c00; cursor: pointer; }
-  .tab.active { background: #f5b301; color: #000; border-color: #f5b301; }
+  .tab {
+    flex: 0 0 auto;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #f5b301;
+    background: #0a0a0a;
+    border: 1px solid #3a2c00;
+    cursor: pointer;
+  }
+  .tab.active {
+    background: #f5b301;
+    color: #000;
+    border-color: #f5b301;
+  }
 
   /* ---------- Charts ---------- */
-  .chart-wrap { position: relative; background: #0a0a0a; border: 1px solid #3a2c00;
-    border-radius: 18px; padding: 14px 8px 8px; height: 220px; margin-bottom: 12px; }
-  .chart-wrap.power-chart { height: 180px; }
-  .chart-tag { position: absolute; top: 10px; left: 14px; font-size: 0.72rem;
-    font-weight: 700; color: #f5b301; z-index: 5; letter-spacing: 0.5px; }
-  .chart-legend {
-    position: absolute; top: 10px; right: 14px;
-    display: flex; gap: 10px; font-size: 0.62rem; color: #f5b301; opacity: 0.75; z-index: 5;
+  .chart-wrap {
+    position: relative;
+    background: #0a0a0a;
+    border: 1px solid #3a2c00;
+    border-radius: 18px;
+    padding: 14px 8px 8px;
+    height: 220px;
+    margin-bottom: 12px;
+    overflow: hidden;
+    width: 100%;
   }
-  .chart-legend .dot { display: inline-block; width: 8px; height: 8px;
-    border-radius: 50%; margin-right: 3px; vertical-align: middle; }
-  canvas { width: 100% !important; height: 100% !important; }
+  .chart-wrap.power-chart { height: 180px; }
+  .chart-tag {
+    position: absolute;
+    top: 10px;
+    left: 14px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #f5b301;
+    z-index: 5;
+    letter-spacing: 0.5px;
+  }
+  .chart-legend {
+    position: absolute;
+    top: 10px;
+    right: 14px;
+    display: flex;
+    gap: 10px;
+    font-size: 0.62rem;
+    color: #f5b301;
+    opacity: 0.75;
+    z-index: 5;
+  }
+  .chart-legend .dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 3px;
+    vertical-align: middle;
+  }
+  canvas {
+    width: 100% !important;
+    height: 100% !important;
+    max-width: 100%;
+  }
 
   /* ---------- Table ---------- */
-  .table-box { background: #0a0a0a; border: 1px solid #3a2c00; border-radius: 16px;
-    overflow: hidden; max-height: 380px; overflow-y: auto; }
-  table { width: 100%; border-collapse: collapse; font-size: 0.74rem; }
-  th, td { padding: 9px 8px; text-align: left;
-    border-bottom: 1px solid #2a2000; color: #f5b301; }
-  th { background: #000; font-size: 0.62rem; text-transform: uppercase;
-    letter-spacing: 0.4px; color: #f5b301; opacity: 0.65;
-    position: sticky; top: 0; z-index: 2; }
+  .table-box {
+    background: #0a0a0a;
+    border: 1px solid #3a2c00;
+    border-radius: 16px;
+    overflow: hidden;
+    max-height: 380px;
+    overflow-y: auto;
+    width: 100%;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.74rem;
+    table-layout: fixed;
+  }
+  th, td {
+    padding: 9px 8px;
+    text-align: left;
+    border-bottom: 1px solid #2a2000;
+    color: #f5b301;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  th {
+    background: #000;
+    font-size: 0.62rem;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: #f5b301;
+    opacity: 0.65;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+  }
   tbody tr:nth-child(even) { background: #060600; }
   tbody tr:last-child td { border-bottom: none; }
-  .badge { padding: 2px 7px; border-radius: 20px; font-size: 0.66rem; font-weight: 700; }
+  .badge {
+    padding: 2px 7px;
+    border-radius: 20px;
+    font-size: 0.66rem;
+    font-weight: 700;
+  }
   .badge.on  { background: #f5b301; color: #000; }
   .badge.off { background: #2a2000; color: #8a6a00; }
 
-  .refresh { text-align: center; font-size: 0.7rem; color: #f5b301;
-    opacity: 0.55; margin-top: 14px; }
+  .refresh {
+    text-align: center;
+    font-size: 0.7rem;
+    color: #f5b301;
+    opacity: 0.55;
+    margin-top: 14px;
+  }
 </style>
 </head>
 <body>
@@ -120,7 +357,7 @@
   <div class="gauges">
     <div class="gauge-card">
       <div class="gauge-wrap">
-        <svg class="gauge-svg" width="130" height="130" viewBox="0 0 130 130">
+        <svg class="gauge-svg" viewBox="0 0 130 130" preserveAspectRatio="xMidYMid meet">
           <circle class="gauge-bg" cx="65" cy="65" r="55"></circle>
           <circle class="gauge-fg" id="gaugeHum" cx="65" cy="65" r="55"
                   stroke-dasharray="345.6" stroke-dashoffset="345.6"></circle>
@@ -135,7 +372,7 @@
 
     <div class="gauge-card">
       <div class="gauge-wrap">
-        <svg class="gauge-svg" width="130" height="130" viewBox="0 0 130 130">
+        <svg class="gauge-svg" viewBox="0 0 130 130" preserveAspectRatio="xMidYMid meet">
           <circle class="gauge-bg" cx="65" cy="65" r="55"></circle>
           <circle class="gauge-fg" id="gaugeTemp" cx="65" cy="65" r="55"
                   stroke-dasharray="345.6" stroke-dashoffset="345.6"></circle>
@@ -251,7 +488,7 @@
 
 <script>
 /* ============================================================
-   DEMO — all-yellow theme, settable targets, 3 charts
+   DEMO — full-screen, all-yellow, settable targets
    ============================================================ */
 
 const YELLOW = "#f5b301";
@@ -356,7 +593,7 @@ function render() {
       <td>${r.target}</td>
       <td><span class="badge ${r.humState === "ON" ? "on" : "off"}">${r.humState}</span></td>
       <td><span class="badge ${r.fanState === "ON" ? "on" : "off"}">${r.fanState}</span></td>
-      <td>${w.toFixed(0)} W</td>
+      <td>${w.toFixed(0)}W</td>
     </tr>`;
   }).join("");
 
@@ -420,7 +657,7 @@ function drawHumidityChart(rows) {
         backgroundColor: "rgba(245,179,1,0.12)", fill: true, tension: 0.35,
         pointRadius: 0, borderWidth: 2.5 },
       { label: "Target", data: target, borderColor: YELLOW,
-        pointRadius: 0, borderWidth: 1.4, borderDash: [5, 4], opacity: 0.5 }
+        pointRadius: 0, borderWidth: 1.4, borderDash: [5, 4] }
     ]},
     options: {
       responsive: true, maintainAspectRatio: false, animation: false,
@@ -454,7 +691,7 @@ function drawTempChart(rows) {
         backgroundColor: "rgba(245,179,1,0.12)", fill: true, tension: 0.35,
         pointRadius: 0, borderWidth: 2.5 },
       { label: "Target", data: targetT, borderColor: YELLOW,
-        pointRadius: 0, borderWidth: 1.4, borderDash: [5, 4], opacity: 0.5 }
+        pointRadius: 0, borderWidth: 1.4, borderDash: [5, 4] }
     ]},
     options: {
       responsive: true, maintainAspectRatio: false, animation: false,
